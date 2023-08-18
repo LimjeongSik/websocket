@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Document</title>
+    </head>
+
+    <style>
+        .wrap {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .ticketList {
+            width: 100%;
+            max-width: 900px;
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            grid-gap: 5px;
+        }
+        .ticketList li {
+            list-style: none;
+            width: 100%;
+            height: 50px;
+            font-size: 0;
+            cursor: pointer;
+        }
+
+        .disabled {
+            background-color: #ccc;
+        }
+        .enabled {
+            background-color: #d84f4f;
+        }
+    </style>
+    <body>
+        <div class="wrap">
+            <ul class="ticketList"></ul>
+        </div>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.3.0/socket.io.js"></script>
+        <script>
+            const socket = io('http://localhost:3000/ticketing', {
+                transports: ['websocket'],
+            }); // 서버주소가 http 프로토콜임을 유의
+            const ticketList = document.querySelector('.ticketList');
+
+            socket.on('seat', (data) => {
+                ticketList.innerHTML = '';
+                data.forEach((item, dataX) => {
+                    item.forEach((row, dataY) => {
+                        const li = document.createElement('li');
+                        li.appendChild(document.createTextNode(row));
+
+                        if (row === 0) {
+                            li.classList.add('disabled');
+                        } else {
+                            li.classList.add('enabled');
+                            li.addEventListener('click', () => {
+                                if (confirm('예매하시겠습니까?'))
+                                    reserveSeat(dataX, dataY);
+                            });
+                        }
+
+                        ticketList.appendChild(li);
+                    });
+                });
+            });
+
+            function reserveSeat(row, col) {
+                socket.emit('reserve', { row, col });
+            }
+        </script>
+    </body>
+</html>
